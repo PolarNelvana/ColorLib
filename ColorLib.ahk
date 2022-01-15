@@ -943,7 +943,7 @@ RYB2Hex(red, yellow, blue, inputFormat)
     yellow -= green
     blue -= green
 
-    if ((blue > 0) && (green > 0))
+    if ((blue && green) != 0)
     {
         blue *= 2
         green *= 2
@@ -1566,14 +1566,374 @@ quadrantConfig(a, b)
     return h
 }
 
+cubicInt(t, a, b)
+{
+	weight := t * t * (3 - (2 * t))
+	weight := a + weight * (b - a)
+	return weight
+}
+
+; Input and output: 0 <= RGB <= 1
+ryb2RGB(ir, iy, ib)
+{
+	; red
+	x0 := cubicInt(iB, 1.0, 0.163)
+	x1 := cubicInt(iB, 1.0, 0.0)
+	x2 := cubicInt(iB, 1.0, 0.5)
+	x3 := cubicInt(iB, 1.0, 0.2)
+	y0 := cubicInt(iY, x0, x1)
+	y1 := cubicInt(iY, x2, x3)
+	oRr := cubicInt(iR, y0, y1)
+
+	; green
+	x0 := cubicInt(iB, 1.0, 0.373)
+	x1 := cubicInt(iB, 1.0, 0.66)
+	x2 := cubicInt(iB, 0.0, 0.0)
+	x3 := cubicInt(iB, 0.5, 0.094)
+	y0 := cubicInt(iY, x0, x1)
+	y1 := cubicInt(iY, x2, x3)
+	oG := cubicInt(iR, y0, y1)
+
+	; blue
+	x0 := cubicInt(iB, 1.0, 0.6)
+	x1 := cubicInt(iB, 0.0, 0.2)
+	x2 := cubicInt(iB, 0.0, 0.5)
+	x3 := cubicInt(iB, 0.0, 0.0)
+	y0 := cubicInt(iY, x0, x1)
+	y1 := cubicInt(iY, x2, x3)
+	oB := cubicInt(iR, y0, y1)
+
+	rgbArray := []
+
+	rgbArray[1] := oRr
+	rgbArray[2] := oG
+	rgbArray[3] := oB
+
+	return rgbArray
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; MISCELLANEOUS
+
+; This function below allows us to call any of the conversion functions above using a number instead of the function name
+; First argument is our hexadecimal value
+; Second argument is the number of the color format
+; To get the number of the color format, look at the comments throughout the function below
+; The precision flag indicates how many decimals we want
+hex2Number(hexadecimal, typeNumber, precisionFlag)
+{
+	if (typeNumber = 1) ; HTML
+		array := hex2HexOtherFormat(hexadecimal, 1, "#")
+	else if (typeNumber = 2) ; Hex (RGB)
+		array := hex2HexOtherFormat(hexadecimal, 1, "0x")
+	else if (typeNumber = 3) ; RGB (255)
+		array := hex2RGB(hexadecimal, 1, precisionFlag)
+	else if (typeNumber = 4) ; RGB (100)
+		array := hex2RGB(hexadecimal, 2, precisionFlag)
+	else if (typeNumber = 5) ; RGB (1)
+		array := hex2RGB(hexadecimal, 3, precisionFlag)
+	else if (typeNumber = 6) ; Integer (RGB)
+		array := hex2Integer(hexadecimal, 1)
+	else if (typeNumber = 7) ; Hex (BGR)
+		array := hex2HexOtherFormat(hexadecimal, 2, "0x")
+	else if (typeNumber = 8) ; BGR (255)
+		array := hex2BGR(hexadecimal, 1, precisionFlag)
+	else if (typeNumber = 9) ; BGR (100)
+		array := hex2BGR(hexadecimal, 2, precisionFlag)
+	else if (typeNumber = 10) ; BGR (1)
+		array := hex2BGR(hexadecimal, 3, precisionFlag)
+	else if (typeNumber = 11) ; Integer (BGR)
+		array := hex2Integer(hexadecimal, 2)
+	else if (typeNumber = 12) ; Hex (RYB)
+		array := hex2HexOtherFormat(hexadecimal, 3, "0x")
+	else if (typeNumber = 13) ; RYB (255)
+		array := hex2RYB(hexadecimal, 1, precisionFlag)
+	else if (typeNumber = 14) ; RYB (100)
+		array := hex2RYB(hexadecimal, 2, precisionFlag)
+	else if (typeNumber = 15) ; RYB (1)
+		array := hex2RYB(hexadecimal, 3, precisionFlag)
+	else if (typeNumber = 16) ; Integer (RYB)
+		array := hex2Integer(hexadecimal, 3)
+	else if (typeNumber = 17) ; Hex (Android RGB)
+		array := hex2HexOtherFormat(hexadecimal, 4, "0x")
+	else if (typeNumber = 18) ; Integer (Android RGB)
+		array := hex2Integer(hexadecimal, 4)
+    else if (typeNumber = 19) ; Adobe RGB (255)
+        array := hex2AdobeRGB(hexadecimal, 1, precisionFlag)
+    else if (typeNumber = 20) ; Adobe RGB (100)
+        array := hex2AdobeRGB(hexadecimal, 2, precisionFlag)
+    else if (typeNumber = 21) ; Adobe RGB (1)
+        array := hex2AdobeRGB(hexadecimal, 3, precisionFlag)
+    else if (typeNumber = 22) ; HSL (360, 100, 100)
+        array := hex2HSL(hexadecimal, 1, precisionFlag)
+    else if (typeNumber = 23) ; HSL (360, 1, 1)
+        array := hex2HSL(hexadecimal, 2, precisionFlag)
+    else if (typeNumber = 24) ; HSL (255)
+        array := hex2HSL(hexadecimal, 3, precisionFlag)
+    else if (typeNumber = 25) ; HSL (240)
+        array := hex2HSL(hexadecimal, 4, precisionFlag)
+    else if (typeNumber = 26) ; HSL (1)
+        array := hex2HSL(hexadecimal, 5, precisionFlag)
+    else if (typeNumber = 27) ; HSV/B (360, 100, 100)
+        array := hex2HSVB(hexadecimal, 1, precisionFlag)
+    else if (typeNumber = 28) ; HSV/B (360, 1, 1)
+        array := hex2HSVB(hexadecimal, 2, precisionFlag)
+    else if (typeNumber = 29) ; HSV/B (1)
+        array := hex2HSVB(hexadecimal, 3, precisionFlag)
+    else if (typeNumber = 30) ; HWB (360, 100, 100)
+        array := hex2HWB(hexadecimal, 1, precisionFlag)
+    else if (typeNumber = 31) ; HWB (360, 1, 1)
+        array := hex2HWB(hexadecimal, 2, precisionFlag)
+    else if (typeNumber = 32) ; HWB (1)
+        array := hex2HWB(hexadecimal, 3, precisionFlag)
+    else if (typeNumber = 33) ; HSI (360, 100, 255)
+        array := hex2HSI(hexadecimal, 1, precisionFlag)
+    else if (typeNumber = 34) ; HSI (360, 1, 255)
+        array := hex2HSI(hexadecimal, 2, precisionFlag)
+    else if (typeNumber = 35) ; HSI (360, 1, 1)
+        array := hex2HSI(hexadecimal, 3, precisionFlag)
+    else if (typeNumber = 36) ; HSI (1)
+        array := hex2HSI(hexadecimal, 4, precisionFlag)
+    else if (typeNumber = 37) ; CMYK (100)
+        array := hex2CMYK(hexadecimal, 1, precisionFlag)
+    else if (typeNumber = 38) ; CMYK (1)
+        array := hex2CMYK(hexadecimal, 2, precisionFlag)
+    else if (typeNumber = 39) ; CMY (100)
+        array := hex2CMY(hexadecimal, 1, precisionFlag)
+    else if (typeNumber = 40) ; CMY (1)
+        array := hex2CMY(hexadecimal, 2, precisionFlag)
+    else if (typeNumber = 41) ; Delphi
+        array := hex2HexOtherFormat(hexadecimal, 2, "$")
+    else if (typeNumber = 42) ; XYZ
+        array := hex2XYZ(hexadecimal, precisionFlag)
+    else if (typeNumber = 43) ; Yxy
+        array := hex2Yxy(hexadecimal, precisionFlag)
+    else if (typeNumber = 44) ; CIELab
+        array := hex2CIELab(hexadecimal, precisionFlag)
+    else if (typeNumber = 45) ; CIELChab
+        array := hex2CIELChab(hexadecimal, precisionFlag)
+    else if (typeNumber = 46) ; CIELShab
+        array := hex2CIELShab(hexadecimal, precisionFlag)
+    else if (typeNumber = 47) ; CIELuv
+        array := hex2CIELuv(hexadecimal, precisionFlag)
+    else if (typeNumber = 48) ; CIELChuv
+        array := hex2CIELChuv(hexadecimal, precisionFlag)
+    else if (typeNumber = 49) ; CIELShuv
+        array := hex2CIELShuv(hexadecimal, precisionFlag)
+    else if (typeNumber = 50) ; Hunter Lab
+        array := hex2HunterLab(hexadecimal, precisionFlag)
+    else if (typeNumber = 51) ; YUV (255)
+        array := hex2YUV(hexadecimal, 1, precisionFlag)
+    else if (typeNumber = 52) ; YUV (1)
+        array := hex2YUV(hexadecimal, 2, precisionFlag)
+    else if (typeNumber = 53) ; YCbCr (HD)
+        array := hex2YCbCr(hexadecimal, 1, precisionFlag)
+    else if (typeNumber = 54) ; YCbCr (FD)
+        array := hex2YCbCr(hexadecimal, 2, precisionFlag)
+    else if (typeNumber = 55) ; YCbCr (SD)
+        array := hex2YCbCr(hexadecimal, 3, precisionFlag)
+    else if (typeNumber = 56) ; YPbPr (HD)
+        array := hex2YPbPr(hexadecimal, 1, precisionFlag)
+    else if (typeNumber = 57) ; YPbPr (SD)
+        array := hex2YPbPr(hexadecimal, 2, precisionFlag)
+    else if (typeNumber = 58) ; YCxCz
+        array := hex2YCxCz(hexadecimal, precisionFlag)
+    else if (typeNumber = 59) ; YCoCg
+        array := hex2YCoCg(hexadecimal, precisionFlag)
+
+    return array
+}
+
+; This function below allows us to convert any value to hexadecimal using a number instead of the function name
+; First argument is a variable of whatever type of value you have -- it can be a normal variable or an array
+; Second argument is the number of the color format of the variable you are sending in to the function
+; To get the number of the color format, look at the comments throughout the function below
+number2Hex(variable, typeNumber)
+{
+	if (typeNumber = 1) ; HTML
+		array := hexOtherFormat2Hex(variable, 1, "#")
+	else if (typeNumber = 2) ; Hex (RGB)
+		array := hexOtherFormat2Hex(variable, 1, "0x")
+	else if (typeNumber = 3) ; RGB (255)
+		array := RGB2Hex(variable[1], variable[2], variable[3], 1)
+	else if (typeNumber = 4) ; RGB (100)
+		array := RGB2Hex(variable[1], variable[2], variable[3], 2)
+	else if (typeNumber = 5) ; RGB (1)
+		array := RGB2Hex(variable[1], variable[2], variable[3], 3)
+	else if (typeNumber = 6) ; Integer (RGB)
+		array := integer2Hex(variable, 1)
+	else if (typeNumber = 7) ; Hex (BGR)
+		array := hexOtherFormat2Hex(variable, 2, "0x")
+	else if (typeNumber = 8) ; BGR (255)
+		array := BGR2Hex(variable[1], variable[2], variable[3], 1)
+	else if (typeNumber = 9) ; BGR (100)
+		array := BGR2Hex(variable[1], variable[2], variable[3], 2)
+	else if (typeNumber = 10) ; BGR (1)
+		array := BGR2Hex(variable[1], variable[2], variable[3], 3)
+	else if (typeNumber = 11) ; Integer (BGR)
+		array := integer2Hex(variable, 2)
+	else if (typeNumber = 12) ; Hex (RYB)
+		array := hexOtherFormat2Hex(variable, 3, "0x")
+	else if (typeNumber = 13) ; RYB (255)
+		array := RYB2Hex(variable[1], variable[2], variable[3], 1)
+	else if (typeNumber = 14) ; RYB (100)
+		array := RYB2Hex(variable[1], variable[2], variable[3], 2)
+	else if (typeNumber = 15) ; RYB (1)
+		array := RYB2Hex(variable[1], variable[2], variable[3], 3)
+	else if (typeNumber = 16) ; Integer (RYB)
+		array := integer2Hex(variable, 3)
+	else if (typeNumber = 17) ; Hex (Android RGB)
+		array := hexOtherFormat2Hex(variable, 4, "0x")
+	else if (typeNumber = 18) ; Integer (Android RGB)
+		array := integer2Hex(variable, 4)
+    else if (typeNumber = 19) ; Adobe RGB (255)
+        array := AdobeRGB2Hex(variable[1], variable[2], variable[3], 1)
+    else if (typeNumber = 20) ; Adobe RGB (100)
+        array := AdobeRGB2Hex(variable[1], variable[2], variable[3], 2)
+    else if (typeNumber = 21) ; Adobe RGB (1)
+        array := AdobeRGB2Hex(variable[1], variable[2], variable[3], 3)
+    else if (typeNumber = 22) ; HSL (360, 100, 100)
+        array := HSL2Hex(variable[1], variable[2], variable[3], 1)
+    else if (typeNumber = 23) ; HSL (360, 1, 1)
+        array := HSL2Hex(variable[1], variable[2], variable[3], 2)
+    else if (typeNumber = 24) ; HSL (255)
+        array := HSL2Hex(variable[1], variable[2], variable[3], 3)
+    else if (typeNumber = 25) ; HSL (240)
+        array := HSL2Hex(variable[1], variable[2], variable[3], 4)
+    else if (typeNumber = 26) ; HSL (1)
+        array := HSL2Hex(variable[1], variable[2], variable[3], 5)
+    else if (typeNumber = 27) ; HSV/B (360, 100, 100)
+        array := HSVB2Hex(variable[1], variable[2], variable[3], 1)
+    else if (typeNumber = 28) ; HSV/B (360, 1, 1)
+        array := HSVB2Hex(variable[1], variable[2], variable[3], 2)
+    else if (typeNumber = 29) ; HSV/B (1)
+        array := HSVB2Hex(variable[1], variable[2], variable[3], 3)
+    else if (typeNumber = 30) ; HWB (360, 100, 100)
+        array := HWB2Hex(variable[1], variable[2], variable[3], 1)
+    else if (typeNumber = 31) ; HWB (360, 1, 1)
+        array := HWB2Hex(variable[1], variable[2], variable[3], 2)
+    else if (typeNumber = 32) ; HWB (1)
+        array := HWB2Hex(variable[1], variable[2], variable[3], 3)
+    else if (typeNumber = 33) ; HSI (360, 100, 255)
+        array := HSI2Hex(variable[1], variable[2], variable[3], 1)
+    else if (typeNumber = 34) ; HSI (360, 1, 255)
+        array := HSI2Hex(variable[1], variable[2], variable[3], 2)
+    else if (typeNumber = 35) ; HSI (360, 1, 1)
+        array := HSI2Hex(variable[1], variable[2], variable[3], 3)
+    else if (typeNumber = 36) ; HSI (1)
+        array := HSI2Hex(variable[1], variable[2], variable[3], 4)
+    else if (typeNumber = 37) ; CMYK (100)
+        array := CMYK2Hex(variable[1], variable[2], variable[3], variable[4], 1)
+    else if (typeNumber = 38) ; CMYK (1)
+        array := CMYK2Hex(variable[1], variable[2], variable[3], variable[4], 2)
+    else if (typeNumber = 39) ; CMY (100)
+        array := CMY2Hex(variable[1], variable[2], variable[3], 1)
+    else if (typeNumber = 40) ; CMY (1)
+        array := CMY2Hex(variable[1], variable[2], variable[3], 2)
+    else if (typeNumber = 41) ; Delphi
+        array := hexOtherFormat2Hex(variable, 2, "$")
+    else if (typeNumber = 42) ; XYZ
+        array := XYZ2Hex(variable[1], variable[2], variable[3])
+    else if (typeNumber = 43) ; Yxy
+        array := Yxy2Hex(variable[1], variable[2], variable[3])
+    else if (typeNumber = 44) ; CIELab
+        array := CIELab2Hex(variable[1], variable[2], variable[3])
+    else if (typeNumber = 45) ; CIELChab
+        array := CIELChab2Hex(variable[1], variable[2], variable[3])
+    else if (typeNumber = 46) ; CIELShab
+        array := CIELShab2Hex(variable[1], variable[2], variable[3])
+    else if (typeNumber = 47) ; CIELuv
+        array := CIELuv2Hex(variable[1], variable[2], variable[3])
+    else if (typeNumber = 48) ; CIELChuv
+        array := CIELChuv2Hex(variable[1], variable[2], variable[3])
+    else if (typeNumber = 49) ; CIELShuv
+        array := CIELShuv2Hex(variable[1], variable[2], variable[3])
+    else if (typeNumber = 50) ; Hunter Lab
+        array := HunterLab2Hex(variable[1], variable[2], variable[3])
+    else if (typeNumber = 51) ; YUV (255)
+        array := YUV2Hex(variable[1], variable[2], variable[3], 1)
+    else if (typeNumber = 52) ; YUV (1)
+        array := YUV2Hex(variable[1], variable[2], variable[3], 2)
+    else if (typeNumber = 53) ; YCbCr (HD)
+        array := YCbCr2Hex(variable[1], variable[2], variable[3], 1)
+    else if (typeNumber = 54) ; YCbCr (FD)
+        array := YCbCr2Hex(variable[1], variable[2], variable[3], 2)
+    else if (typeNumber = 55) ; YCbCr (SD)
+        array := YCbCr2Hex(variable[1], variable[2], variable[3], 3)
+    else if (typeNumber = 56) ; YPbPr (HD)
+        array := YPbPr2Hex(variable[1], variable[2], variable[3], 1)
+    else if (typeNumber = 57) ; YPbPr (SD)
+        array := YPbPr2Hex(variable[1], variable[2], variable[3], 2)
+    else if (typeNumber = 58) ; YCxCz
+        array := YCxCz2Hex(variable[1], variable[2], variable[3])
+    else if (typeNumber = 59) ; YCoCg
+        array := YCoCg2Hex(variable[1], variable[2], variable[3])
+
+    return array
+}
+
+; This function formats all of the conversion arrays into formatted text
+; The function also adds parenthesis and commas to arrays greater than length 1
+arrayToText(array)
+{
+    if (array.Length() = 1)
+        return array[1]
+
+    expression := "("
+    loop, % array.Length() - 1
+        expression .= array[a_index] . ", "
+    expression .= array[array.Length()] . ")"
+    return expression
+}
+
+; This function determines the appropriate contrasting color
+; Input: Hexadecimal value
+; Output: Black or white contrasting color
+; typeNumber refers to the desired output format (see the conversionNumber() function above)
+contrastFinder(hexadecimal, typeNumber)
+{
+    rgbArray := hex2RGB(hexadecimal, 3, "x")
+
+	red := rgbArray[1]
+	if (red <= 0.03928)
+		red := red / 12.92
+	else
+		red := ((red + 0.055) / 1.055) ** 2.4
+
+	green := rgbArray[2]
+	if (green <= 0.03928)
+		green := green / 12.92
+	else
+		green := ((green + 0.055) / 1.055) ** 2.4
+
+	blue := rgbArray[3]
+	if (blue <= 0.03928)
+		blue := blue / 12.92
+	else
+		blue := ((blue + 0.055) / 1.055) ** 2.4
+
+	luminance := 0.2126 * red + 0.7152 * green + 0.0722 * blue
+
+	if (luminance > 0.179)
+		return hex2Number(0x000000, typeNumber, "x")
+	else
+		return hex2Number(0xFFFFFF, typeNumber, "x")
+}
+
+global listFormats := ["HTML", "Hex (RGB)", "RGB (255)", "RGB (100)", "RGB (1)", "Integer (RGB)", "Hex (BGR)", "BGR (255)", "BGR (100)", "BGR (1)", "Integer (BGR)", "Hex (RYB)", "RYB (255)", "RYB (100)", "RYB (1)", "Integer (RYB)", "Hex (Android RGB)", "Integer (Android RGB)", "Adobe RGB (255)", "Adobe RGB (100)", "Adobe RGB (1)", "HSL (360, 100, 100)", "HSL (360, 1, 1)", "HSL (255)", "HSL (240)", "HSL (1)", "HSV/B (360, 100, 100)", "HSV/B (360, 1, 1)", "HSV/B (1)", "HWB (360, 100, 100)", "HWB (360, 1, 1)", "HWB (1)", "HSI (360, 100, 255)", "HSI (360, 1, 255)", "HSI (360, 1, 1)", "HSI (1)", "CMYK (100)", "CMYK (1)", "CMY (100)", "CMY (1)", "Delphi", "XYZ", "Yxy", "CIELab", "CIELChab", "CIELShab", "CIELuv", "CIELChuv", "CIELShuv", "Hunter Lab", "YUV (255)", "YUV (1)", "YCbCr (HD)", "YCbCr (FD)", "YCbCr (SD)", "YPbPr (HD)", "YPbPr (SD)", "YCxCz", "YCoCg"]
+
+; DEBUG
+; loop, 59
+;    OutputDebug, % listFormats[a_index] . ":   " . colorString("0xABCDEF", a_index, "x")
+
 /* References:
 RYB: https://web.archive.org/web/20130525061042/www.insanit.net/tag/rgb-to-ryb/
 HWB: https://en.wikipedia.org/wiki/HWB_color_model
-Hex2SI: http://eng.usf.edu/~hady/courses/cap5400/rgb-to-hsi.pdf
+Hex2HSI: http://eng.usf.edu/~hady/courses/cap5400/rgb-to-hsi.pdf
 HSI2Hex: https://www.youtube.com/watch?v=EsKEOhZs_GI
 CIELShab/CIELShuv: https://en.wikipedia.org/wiki/Colorfulness
 YUV: https://web.archive.org/web/20180421030430/http://www.equasys.de/colorconversion.html
 YCxCz: https://engineering.purdue.edu/~bouman/software/YCxCz/pdf/ColorFidelityMetrics.pdf
-YCoCg: https://en.wikipedia.org/wiki/YCoCg
+YCoCg: https://en.wikipedia.org/wiki/
 Many others: http://www.easyrgb.com/en/math.php and http://www.brucelindbloom.com/index.html?Equations.html
+Contrasting: https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
 */
